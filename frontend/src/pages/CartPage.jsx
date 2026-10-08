@@ -177,14 +177,14 @@ export default function CartPage() {
                 </div>
 
                 {/* Info & Quantity controls */}
-                <div className="flex flex-col justify-between h-[135px] flex-1 py-0.5 text-xs">
+                <div className="flex flex-col flex-1 py-0.5 text-xs gap-1.5">
                   <div>
                     <h3 className="font-bold text-gray-100 text-[13px]">{product?.title}</h3>
                     <p className="text-[11px] text-gray-400">by <span className="text-gray-300">{product?.author}</span></p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">{product?.description}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-2">{product?.description}</p>
                   </div>
 
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     <p className="text-[10px] text-gray-400">{product?.format || 'Paperback'}</p>
                     <p className="text-[10px] text-indigo-400 font-medium">{product?.tagText || 'Non-fiction, Self Help'}</p>
                     <div className="text-[13px] font-extrabold text-white">₹{product?.price}</div>
@@ -195,26 +195,31 @@ export default function CartPage() {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-3 pt-1">
-                    <span className="text-xs font-bold text-gray-200">{item.quantity}</span>
-                    <button
-                      onClick={() => {
-                        if (item.quantity <= 1) {
-                          removeItem(item.id);
-                        } else {
-                          updateItem({ itemId: item.id, quantity: item.quantity - 1 });
-                        }
-                      }}
-                      className="text-gray-400 hover:text-red-400 font-bold px-1"
-                    >
-                      -
-                    </button>
-                    <button
-                      onClick={() => updateItem({ itemId: item.id, quantity: item.quantity + 1 })}
-                      className="text-gray-400 hover:text-white font-bold px-1"
-                    >
-                      +
-                    </button>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-gray-400">Qty:</span>
+                    <div className="flex items-center bg-[#202126] border border-[#2c2e38] rounded-lg overflow-hidden">
+                      <button
+                        onClick={() => {
+                          if (item.quantity <= 1) {
+                            removeItem(item.id);
+                          } else {
+                            updateItem({ itemId: item.id, quantity: item.quantity - 1 });
+                          }
+                        }}
+                        className="px-3 py-1.5 text-gray-300 hover:text-red-400 transition font-bold text-sm leading-none"
+                      >
+                        −
+                      </button>
+                      <span className="px-3 py-1.5 text-white font-bold text-xs min-w-[2rem] text-center border-x border-[#2c2e38]">
+                        {item.quantity}
+                      </span>
+                      <button
+                        onClick={() => updateItem({ itemId: item.id, quantity: item.quantity + 1 })}
+                        className="px-3 py-1.5 text-gray-300 hover:text-white transition font-bold text-sm leading-none"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
