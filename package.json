@@ -1,0 +1,21 @@
+{
+  "name": "online-bookstore-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI Specialist Capstone — Online Bookstore Application",
+  "scripts": {
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build:backend": "npm --prefix backend run build",
+    "build:frontend": "npm --prefix frontend run build",
+    "test:backend": "npm --prefix backend run test",
+    "test:frontend": "npm --prefix frontend run test",
+    "seed:backend": "npm --prefix backend run prisma:seed"
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "author": "AI Specialist Capstone Team",
+  "license": "ISC"
+}
