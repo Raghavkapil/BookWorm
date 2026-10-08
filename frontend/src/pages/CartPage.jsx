@@ -7,7 +7,7 @@ import api from '../lib/api';
 export default function CartPage() {
   const navigate = useNavigate();
   const { user, refreshUser } = useAuth();
-  const { cart, updateItem, clearCart } = useCart();
+  const { cart, updateItem, removeItem, clearCart } = useCart();
 
   // Form State
   const [useSavedAddress, setUseSavedAddress] = useState(true);
@@ -188,14 +188,24 @@ export default function CartPage() {
                     <p className="text-[10px] text-gray-400">{product?.format || 'Paperback'}</p>
                     <p className="text-[10px] text-indigo-400 font-medium">{product?.tagText || 'Non-fiction, Self Help'}</p>
                     <div className="text-[13px] font-extrabold text-white">₹{product?.price}</div>
-                    <p className="text-[9px] text-gray-400">{product?.deliveryDateText || 'Delivery by Mon, 21 Jul'}</p>
+                    <p className="text-[9px] text-gray-400">
+                      {product?.deliveryDays
+                        ? `Delivery within ${product.deliveryDays} day${product.deliveryDays === 1 ? '' : 's'}`
+                        : 'Delivery within 2–5 days'}
+                    </p>
                   </div>
 
                   <div className="flex items-center gap-3 pt-1">
                     <span className="text-xs font-bold text-gray-200">{item.quantity}</span>
                     <button
-                      onClick={() => updateItem({ itemId: item.id, quantity: Math.max(1, item.quantity - 1) })}
-                      className="text-gray-400 hover:text-white font-bold px-1"
+                      onClick={() => {
+                        if (item.quantity <= 1) {
+                          removeItem(item.id);
+                        } else {
+                          updateItem({ itemId: item.id, quantity: item.quantity - 1 });
+                        }
+                      }}
+                      className="text-gray-400 hover:text-red-400 font-bold px-1"
                     >
                       -
                     </button>

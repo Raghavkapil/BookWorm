@@ -1,3 +1,4 @@
 /.env.example
 /docs
 /PROJECT_PLAN.md
+node_modules
