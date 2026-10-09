@@ -66,7 +66,7 @@ export default function WishlistPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#20222a]">
         <div>
@@ -96,7 +96,7 @@ export default function WishlistPage() {
 
       {wishlist.length === 0 ? (
         /* Empty State */
-        <div className="bg-[#16171a] p-12 text-center rounded-2xl border border-[#262830] space-y-4 max-w-lg mx-auto my-12">
+        <div className="bg-[#16171a] p-6 sm:p-12 text-center rounded-2xl border border-[#262830] space-y-4 max-w-lg mx-auto my-6 sm:my-12">
           <div className="w-16 h-16 rounded-full bg-[#202126] border border-[#2c2e38] flex items-center justify-center mx-auto text-gray-500">
             <Heart className="w-8 h-8" />
           </div>
@@ -116,7 +116,7 @@ export default function WishlistPage() {
         </div>
       ) : (
         /* Wishlist Grid */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
           {wishlist.map((book) => (
             <div
               key={book.id}

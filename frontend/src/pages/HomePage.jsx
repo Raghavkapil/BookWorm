@@ -79,17 +79,17 @@ export default function HomePage() {
   const remaining = products.slice(9);
 
   return (
-    <div className="flex min-h-[calc(100vh-53px)] bg-[#111215]">
-      {/* Left Sidebar Category Menu */}
-      <aside className="w-56 flex-shrink-0 bg-[#16171a] border-r border-[#23252a] py-3 text-xs overflow-y-auto">
-        <ul className="space-y-0.5">
+    <div className="flex flex-col lg:flex-row min-h-[calc(100vh-53px)] bg-[#111215]">
+      {/* Category Menu: horizontal scroll strip on small screens, left sidebar on lg+ */}
+      <aside className="w-full lg:w-56 flex-shrink-0 bg-[#16171a] border-b lg:border-b-0 lg:border-r border-[#23252a] py-2 lg:py-3 text-xs overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto">
+        <ul className="flex lg:block gap-1 lg:gap-0 lg:space-y-0.5 px-2 lg:px-0">
           {categoriesList.map((cat) => {
             const isSelected = selectedCategory === cat;
             return (
-              <li key={cat}>
+              <li key={cat} className="flex-shrink-0 lg:flex-shrink">
                 <button
                   onClick={() => setSelectedCategory(cat)}
-                  className={`w-full text-left px-5 py-1.5 transition text-[12px] font-medium ${
+                  className={`w-full text-left px-3 lg:px-5 py-1.5 whitespace-nowrap rounded lg:rounded-none transition text-[12px] font-medium ${
                     isSelected
                       ? 'bg-[#22242a] text-blue-400 font-semibold'
                       : 'text-gray-400 hover:text-gray-200 hover:bg-[#1a1b1f]'
@@ -104,11 +104,11 @@ export default function HomePage() {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 p-6 overflow-x-hidden space-y-7">
+      <div className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 overflow-x-hidden space-y-7">
         {/* Top Filter & Search Bar */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="flex flex-wrap lg:flex-nowrap gap-3">
           {/* Search Box */}
-          <div className="bg-[#1a1b20] border border-[#2b2d35] rounded-lg px-3 py-2 flex items-center justify-between">
+          <div className="w-full sm:w-64 lg:w-auto lg:flex-[1.6] lg:min-w-0 bg-[#1a1b20] border border-[#2b2d35] rounded-lg px-3 py-2 flex items-center justify-between">
             <div className="w-full">
               <label className="text-[10px] text-gray-500 block leading-none mb-1">Search you want to read here</label>
               <input
@@ -123,7 +123,7 @@ export default function HomePage() {
           </div>
 
           {/* Language Dropdown */}
-          <div className="bg-[#1a1b20] border border-[#2b2d35] rounded-lg px-3 py-2 relative">
+          <div className="w-[calc(50%-6px)] sm:w-40 lg:w-auto lg:flex-1 lg:min-w-0 bg-[#1a1b20] border border-[#2b2d35] rounded-lg px-3 py-2 relative">
             <label className="text-[10px] text-gray-500 block leading-none mb-1">Language</label>
             <select
               value={language}
@@ -138,8 +138,8 @@ export default function HomePage() {
           </div>
 
           {/* Format Dropdown */}
-          <div className="bg-[#1a1b20] border border-[#2b2d35] rounded-lg px-3 py-2 relative">
-            <label className="text-[10px] text-gray-500 block leading-none mb-1">Format (Paperback, ebook etc)</label>
+          <div className="w-[calc(50%-6px)] sm:w-52 lg:w-auto lg:flex-1 lg:min-w-0 bg-[#1a1b20] border border-[#2b2d35] rounded-lg px-3 py-2 relative">
+            <label className="text-[10px] text-gray-500 block leading-none mb-1 truncate">Format (Paperback, ebook etc)</label>
             <select
               value={format}
               onChange={(e) => setFormat(e.target.value)}
@@ -154,7 +154,7 @@ export default function HomePage() {
           </div>
 
           {/* Price Range Dropdown */}
-          <div className="bg-[#1a1b20] border border-[#2b2d35] rounded-lg px-3 py-2 relative">
+          <div className="w-[calc(50%-6px)] sm:w-40 lg:w-auto lg:flex-1 lg:min-w-0 bg-[#1a1b20] border border-[#2b2d35] rounded-lg px-3 py-2 relative">
             <label className="text-[10px] text-gray-500 block leading-none mb-1">Price Range</label>
             <select
               value={priceRange}
@@ -170,7 +170,7 @@ export default function HomePage() {
           </div>
 
           {/* Sort By Dropdown */}
-          <div className="bg-[#1a1b20] border border-[#2b2d35] rounded-lg px-3 py-2 relative">
+          <div className="w-[calc(50%-6px)] sm:w-44 lg:w-auto lg:flex-1 lg:min-w-0 bg-[#1a1b20] border border-[#2b2d35] rounded-lg px-3 py-2 relative">
             <label className="text-[10px] text-gray-500 block leading-none mb-1">Sort by</label>
             <select
               value={sortBy}
@@ -196,7 +196,7 @@ export default function HomePage() {
             {recommended.length > 0 && (
               <section className="space-y-3">
                 <h2 className="text-sm font-bold text-gray-200 tracking-wide">Recommended for You</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-x-6 gap-y-4">
                   {recommended.map((b) => (
                     <BookHorizontalCard key={b.id} product={b} />
                   ))}
@@ -208,7 +208,7 @@ export default function HomePage() {
             {bestsellers.length > 0 && (
               <section className="space-y-3">
                 <h2 className="text-sm font-bold text-gray-200 tracking-wide">Bestsellers this Month</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-x-6 gap-y-4">
                   {bestsellers.map((b) => (
                     <BookHorizontalCard key={b.id} product={b} />
                   ))}
@@ -220,7 +220,7 @@ export default function HomePage() {
             {newLaunches.length > 0 && (
               <section className="space-y-3">
                 <h2 className="text-sm font-bold text-gray-200 tracking-wide">New Launches</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-x-6 gap-y-4">
                   {newLaunches.map((b) => (
                     <BookHorizontalCard key={b.id} product={b} />
                   ))}
@@ -232,7 +232,7 @@ export default function HomePage() {
             {remaining.length > 0 && (
               <section className="space-y-3">
                 <h2 className="text-sm font-bold text-gray-200 tracking-wide">Explore More Reads</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-x-6 gap-y-4">
                   {remaining.map((b) => (
                     <BookHorizontalCard key={b.id} product={b} />
                   ))}

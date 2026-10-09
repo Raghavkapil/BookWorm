@@ -1,6 +1,64 @@
 const prisma = require('../../config/db');
 
+// Delivery tracking is derived from the order age (no courier integration yet).
+// `afterHours` = hours since the order was placed at which the stage is reached.
+// `cancelFeePercent` = share of the order amount deducted if cancelled at that stage.
+// Cancellation is free until the order has been packed; fees grow as it moves on.
+const DELIVERY_STAGES = [
+  { key: 'CONFIRMED', label: 'Order Confirmed', afterHours: 0, cancelFeePercent: 0 },
+  { key: 'PACKED', label: 'Packed', afterHours: 4, cancelFeePercent: 0 },
+  { key: 'SHIPPED', label: 'Shipped', afterHours: 24, cancelFeePercent: 10 },
+  { key: 'AT_HUB', label: 'Reached Nearest Hub', afterHours: 48, cancelFeePercent: 20 },
+  { key: 'OUT_FOR_DELIVERY', label: 'Out for Delivery', afterHours: 72, cancelFeePercent: 30 },
+  { key: 'DELIVERED', label: 'Delivered', afterHours: 96, cancelFeePercent: null } // not cancellable
+];
+
+const ACTIVE_STATUSES = ['PENDING', 'CONFIRMED', 'PROCESSING'];
+
 class OrderService {
+  getTracking(order, now = new Date()) {
+    const hoursSincePlaced = (now - new Date(order.createdAt)) / (1000 * 60 * 60);
+
+    // Unpaid orders have not entered the delivery pipeline; they can be cancelled for free.
+    if (order.status === 'PENDING') {
+      return {
+        trackingStages: DELIVERY_STAGES.map(({ key, label }) => ({ key, label })),
+        currentStageIndex: -1,
+        isCancellable: true,
+        cancellationFeePercent: 0,
+        cancellationFee: 0,
+        refundAmount: order.finalAmount
+      };
+    }
+
+    let currentStageIndex = 0;
+    DELIVERY_STAGES.forEach((stage, index) => {
+      if (hoursSincePlaced >= stage.afterHours) currentStageIndex = index;
+    });
+
+    const stage = DELIVERY_STAGES[currentStageIndex];
+    const isCancellable = ACTIVE_STATUSES.includes(order.status) && stage.cancelFeePercent !== null;
+    const cancellationFeePercent = isCancellable ? stage.cancelFeePercent : 0;
+    const cancellationFee = Math.round(order.finalAmount * cancellationFeePercent) / 100;
+
+    return {
+      trackingStages: DELIVERY_STAGES.map(({ key, label }) => ({ key, label })),
+      currentStageIndex,
+      isCancellable,
+      cancellationFeePercent,
+      cancellationFee,
+      refundAmount: Math.round((order.finalAmount - cancellationFee) * 100) / 100
+    };
+  }
+
+  decorateOrder(order) {
+    return {
+      ...order,
+      orderNumber: `ORD-${order.id.toString().padStart(6, '0')}`,
+      ...this.getTracking(order)
+    };
+  }
+
   async listOrders(userId) {
     const orders = await prisma.order.findMany({
       where: { userId },
@@ -12,23 +70,7 @@ class OrderService {
       orderBy: { createdAt: 'desc' }
     });
 
-    const now = new Date();
-
-    return orders.map((order) => {
-      const orderDate = new Date(order.createdAt);
-      const hoursDiff = (now - orderDate) / (1000 * 60 * 60);
-
-      const isCancellable =
-        ['PENDING', 'CONFIRMED', 'PROCESSING'].includes(order.status) &&
-        hoursDiff <= 48;
-
-      return {
-        ...order,
-        orderNumber: `ORD-${order.id.toString().padStart(6, '0')}`,
-        isCancellable,
-        hoursRemainingForCancellation: Math.max(0, Math.floor(48 - hoursDiff))
-      };
-    });
+    return orders.map((order) => this.decorateOrder(order));
   }
 
   async getOrderById(userId, orderId) {
@@ -61,20 +103,7 @@ class OrderService {
       throw error;
     }
 
-    const now = new Date();
-    const orderDate = new Date(order.createdAt);
-    const hoursDiff = (now - orderDate) / (1000 * 60 * 60);
-
-    const isCancellable =
-      ['PENDING', 'CONFIRMED', 'PROCESSING'].includes(order.status) &&
-      hoursDiff <= 48;
-
-    return {
-      ...order,
-      orderNumber: `ORD-${order.id.toString().padStart(6, '0')}`,
-      isCancellable,
-      hoursRemainingForCancellation: Math.max(0, Math.floor(48 - hoursDiff))
-    };
+    return this.decorateOrder(order);
   }
 
   async cancelOrder(userId, orderId) {
@@ -95,20 +124,16 @@ class OrderService {
     }
 
     // Cancellation Rules Check
-    const eligibleStatuses = ['PENDING', 'CONFIRMED', 'PROCESSING'];
-    if (!eligibleStatuses.includes(order.status)) {
+    if (!ACTIVE_STATUSES.includes(order.status)) {
       const error = new Error(`Order cannot be cancelled in status: ${order.status}`);
       error.code = 'FORBIDDEN';
       error.status = 400;
       throw error;
     }
 
-    const now = new Date();
-    const orderDate = new Date(order.createdAt);
-    const hoursDiff = (now - orderDate) / (1000 * 60 * 60);
-
-    if (hoursDiff > 48) {
-      const error = new Error('Order cancellation window (48 hours) has expired');
+    const tracking = this.getTracking(order);
+    if (!tracking.isCancellable) {
+      const error = new Error('Delivered orders cannot be cancelled');
       error.code = 'CANCELLATION_WINDOW_EXPIRED';
       error.status = 400;
       throw error;
@@ -162,7 +187,12 @@ class OrderService {
     });
 
     return {
-      message: 'Order cancelled successfully',
+      message:
+        tracking.cancellationFee > 0
+          ? `Order cancelled. A cancellation fee of ₹${tracking.cancellationFee} was deducted; ₹${tracking.refundAmount} will be refunded.`
+          : 'Order cancelled successfully. Full amount will be refunded.',
+      cancellationFee: tracking.cancellationFee,
+      refundAmount: tracking.refundAmount,
       order: updatedOrder
     };
   }

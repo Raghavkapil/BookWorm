@@ -1,9 +1,51 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Package, RotateCcw, Ban, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Package, RotateCcw, Ban, CheckCircle2, AlertCircle, Check } from 'lucide-react';
 import api from '../lib/api';
 import { useAuth } from '../features/auth/AuthContext';
+
+function DeliveryTracker({ stages, currentIndex, cancelled }) {
+  return (
+    <div className="overflow-x-auto pb-1">
+      <ol className="flex items-start min-w-[520px]">
+        {stages.map((stage, index) => {
+          const reached = !cancelled && index <= currentIndex;
+          const isCurrent = !cancelled && index === currentIndex;
+          const lineReached = !cancelled && index < currentIndex;
+          return (
+            <li key={stage.key} className="flex-1 flex flex-col items-center relative text-center">
+              {index > 0 && (
+                <span
+                  className={`absolute top-3 right-1/2 w-full h-0.5 ${
+                    reached ? 'bg-emerald-500' : 'bg-[#2d2f36]'
+                  }`}
+                  aria-hidden="true"
+                />
+              )}
+              <span
+                className={`relative z-10 w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                  reached
+                    ? 'bg-emerald-500 border-emerald-500 text-white'
+                    : 'bg-[#16171a] border-[#3a3b42] text-transparent'
+                } ${isCurrent ? 'ring-4 ring-emerald-500/20' : ''}`}
+              >
+                <Check className="w-3.5 h-3.5" />
+              </span>
+              <span
+                className={`mt-2 px-1 text-[10px] leading-tight font-medium ${
+                  isCurrent ? 'text-white font-bold' : lineReached ? 'text-gray-300' : 'text-gray-500'
+                }`}
+              >
+                {stage.label}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
 
 export default function OrderHistoryPage() {
   const queryClient = useQueryClient();
@@ -17,9 +59,9 @@ export default function OrderHistoryPage() {
 
   const cancelMutation = useMutation({
     mutationFn: async (orderId) => (await api.post(`/orders/${orderId}/cancel`)).data,
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries(['orders']);
-      setActionMessage({ type: 'success', text: 'Order cancelled successfully within 48h window.' });
+      setActionMessage({ type: 'success', text: data?.message || 'Order cancelled successfully.' });
       setTimeout(() => setActionMessage(null), 4000);
     },
     onError: (err) => {
@@ -38,11 +80,11 @@ export default function OrderHistoryPage() {
   });
 
   return (
-    <div className="p-6 max-w-[1200px] mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-[1200px] mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-base font-bold text-gray-100">My Orders</h1>
-          <p className="text-xs text-gray-400">Track shipments, buy again, and manage 48-hour order cancellations</p>
+          <p className="text-xs text-gray-400">Track shipments, buy again, and cancel orders (free until packed)</p>
         </div>
         <Link to="/" className="text-xs text-blue-400 hover:underline">
           Back to Bookstore
@@ -101,6 +143,19 @@ export default function OrderHistoryPage() {
                 </div>
               </div>
 
+              {/* Delivery progress */}
+              {order.status === 'CANCELLED' ? (
+                <p className="text-[11px] text-rose-400 font-medium">This order was cancelled.</p>
+              ) : order.status === 'PENDING' ? (
+                <p className="text-[11px] text-gray-400">Awaiting payment confirmation.</p>
+              ) : (
+                <DeliveryTracker
+                  stages={order.trackingStages || []}
+                  currentIndex={order.currentStageIndex}
+                  cancelled={false}
+                />
+              )}
+
               {/* Items */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {order.items?.map((item) => (
@@ -118,16 +173,30 @@ export default function OrderHistoryPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-between pt-2 text-xs">
-                <div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 text-xs">
+                <div className="space-y-1">
                   {order.isCancellable && (
-                    <button
-                      onClick={() => cancelMutation.mutate(order.id)}
-                      disabled={cancelMutation.isPending}
-                      className="px-3 py-1.5 bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 rounded font-bold text-xs flex items-center gap-1.5"
-                    >
-                      <Ban className="w-3.5 h-3.5" /> Cancel Order ({order.hoursRemainingForCancellation}h left)
-                    </button>
+                    <>
+                      <button
+                        onClick={() => {
+                          const msg =
+                            order.cancellationFee > 0
+                              ? `Cancelling now costs ₹${order.cancellationFee} (${order.cancellationFeePercent}%). You will be refunded ₹${order.refundAmount}. Continue?`
+                              : 'Cancel this order? The full amount will be refunded.';
+                          if (window.confirm(msg)) cancelMutation.mutate(order.id);
+                        }}
+                        disabled={cancelMutation.isPending}
+                        className="px-3 py-1.5 bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 rounded font-bold text-xs flex items-center gap-1.5"
+                      >
+                        <Ban className="w-3.5 h-3.5" />
+                        {order.cancellationFee > 0 ? 'Cancel Order (fee applies)' : 'Cancel Order (free)'}
+                      </button>
+                      <p className="text-[10px] text-gray-500">
+                        {order.cancellationFee > 0
+                          ? `Cancellation fee: ₹${order.cancellationFee} (${order.cancellationFeePercent}%). It increases as the order moves ahead.`
+                          : 'Free cancellation until the order is packed.'}
+                      </p>
+                    </>
                   )}
                 </div>
 

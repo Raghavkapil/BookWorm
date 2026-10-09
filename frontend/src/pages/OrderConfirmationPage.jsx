@@ -24,7 +24,7 @@ export default function OrderConfirmationPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
+    <div className="max-w-2xl mx-auto space-y-8 p-4 sm:p-6">
       {/* Success Hero */}
       <div className="bg-emerald-50 border border-emerald-200 rounded-3xl p-8 text-center space-y-3">
         <div className="w-14 h-14 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto shadow-md">

@@ -4,6 +4,14 @@ import { useAuth } from '../features/auth/AuthContext';
 import { useCart } from '../features/cart/CartContext';
 import api from '../lib/api';
 
+const PAYMENT_TABS = [
+  { label: 'Credit Card', method: 'CARD' },
+  { label: 'Debit card', method: 'CARD' },
+  { label: 'UPI', method: 'UPI' },
+  { label: 'Wallet', method: 'WALLET' },
+  { label: 'Cash on Delivery', method: 'COD' }
+];
+
 export default function CartPage() {
   const navigate = useNavigate();
   const { user, refreshUser } = useAuth();
@@ -30,6 +38,7 @@ export default function CartPage() {
   // Payment Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPaymentTab, setSelectedPaymentTab] = useState('Credit Card');
+  const [upiId, setUpiId] = useState('');
   const [cardForm, setCardForm] = useState({
     cardNumber: '4532-XXXX-XXXX-8921',
     nameOnCard: 'Alice Sharma',
@@ -46,7 +55,17 @@ export default function CartPage() {
   const rawSubtotal = items.reduce((acc, it) => acc + (it.product?.price || 0) * it.quantity, 0) || 508;
   const taxAmount = 62.00;
   const deliveryCharges = 0;
-  const finalTotal = Math.max(0, rawSubtotal + taxAmount - discountAmount);
+  const finalTotal = Math.max(0, rawSubtotal + taxAmount + deliveryCharges - discountAmount);
+
+  // Payment method helpers
+  const isCardTab = selectedPaymentTab === 'Credit Card' || selectedPaymentTab === 'Debit card';
+  const isUpiValid = /^[a-zA-Z0-9._-]{2,}@[a-zA-Z]{2,}$/.test(upiId);
+  const walletBalance = user?.giftPointsBalance || 0; // 1 gift point = ₹1
+  const canPay =
+    isCardTab ||
+    selectedPaymentTab === 'Cash on Delivery' ||
+    (selectedPaymentTab === 'UPI' && isUpiValid) ||
+    (selectedPaymentTab === 'Wallet' && walletBalance >= finalTotal);
 
   const handleApplyCoupon = (e) => {
     e.preventDefault();
@@ -92,7 +111,7 @@ export default function CartPage() {
       // 3. Create Payment
       const payRes = await api.post('/payments/create', {
         orderId,
-        paymentMethod: selectedPaymentTab.toUpperCase().replace(/\s+/g, '_')
+        paymentMethod: PAYMENT_TABS.find((t) => t.label === selectedPaymentTab).method
       });
 
       // 4. Confirm Payment
@@ -117,7 +136,7 @@ export default function CartPage() {
   };
 
   return (
-    <div className="p-6 max-w-[1400px] mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-[1400px] mx-auto space-y-6">
       {/* Breadcrumb matching UI */}
       <nav className="text-xs text-gray-400 flex items-center gap-1.5">
         <Link to="/" className="text-blue-400 hover:underline">Home</Link>
@@ -147,7 +166,7 @@ export default function CartPage() {
       {/* Shopping Cart Items Horizontal Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[#16171a] p-4 rounded-xl border border-[#23252a]">
         {items.length === 0 ? (
-          <div className="col-span-2 text-center py-6 text-xs text-gray-400">
+          <div className="md:col-span-2 text-center py-6 text-xs text-gray-400">
             Your shopping basket is empty. Add books from the catalogue!
           </div>
         ) : (
@@ -177,7 +196,7 @@ export default function CartPage() {
                 </div>
 
                 {/* Info & Quantity controls */}
-                <div className="flex flex-col flex-1 py-0.5 text-xs gap-1.5">
+                <div className="flex flex-col flex-1 min-w-0 py-0.5 text-xs gap-1.5">
                   <div>
                     <h3 className="font-bold text-gray-100 text-[13px]">{product?.title}</h3>
                     <p className="text-[11px] text-gray-400">by <span className="text-gray-300">{product?.author}</span></p>
@@ -231,7 +250,7 @@ export default function CartPage() {
       {/* Lower Section: Address and Grand Total Side-by-Side */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Form: Address Details (7 cols) */}
-        <div className="lg:col-span-7 bg-[#16171a] p-5 rounded-xl border border-[#23252a] space-y-4 text-xs">
+        <div className="lg:col-span-7 min-w-0 bg-[#16171a] p-5 rounded-xl border border-[#23252a] space-y-4 text-xs">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-gray-200">Address</h2>
           </div>
@@ -247,7 +266,7 @@ export default function CartPage() {
           </label>
 
           <form className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-[10px] text-gray-500 block mb-1">First Name</label>
                 <input
@@ -281,7 +300,7 @@ export default function CartPage() {
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
               <div>
                 <label className="text-[10px] text-gray-500 block mb-1">e-mail</label>
                 <input
@@ -314,7 +333,7 @@ export default function CartPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
               <div>
                 <label className="text-[10px] text-gray-500 block mb-1">Phone Number</label>
                 <div className="flex gap-1.5">
@@ -354,10 +373,10 @@ export default function CartPage() {
         </div>
 
         {/* Right Section: Grand Total with Illustration (5 cols) */}
-        <div className="lg:col-span-5 bg-[#16171a] p-5 rounded-xl border border-[#23252a] flex flex-col justify-between">
-          <div className="flex gap-4">
+        <div className="lg:col-span-5 min-w-0 bg-[#16171a] p-5 rounded-xl border border-[#23252a] flex flex-col justify-between">
+          <div className="flex flex-col sm:flex-row gap-4">
             {/* Dark Blue Book Illustration Banner matching screenshot */}
-            <div className="w-32 h-44 rounded-lg bg-gradient-to-b from-[#1e3a8a] to-[#0f172a] p-3 flex flex-col justify-between border border-blue-900 shadow-inner flex-shrink-0 relative overflow-hidden">
+            <div className="w-32 h-44 mx-auto sm:mx-0 rounded-lg bg-gradient-to-b from-[#1e3a8a] to-[#0f172a] p-3 flex flex-col justify-between border border-blue-900 shadow-inner flex-shrink-0 relative overflow-hidden">
               <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-amber-400"></div>
               <div className="text-[9px] text-blue-200 font-bold uppercase tracking-wider">Book Worm</div>
               <div className="my-auto space-y-1">
@@ -369,7 +388,7 @@ export default function CartPage() {
             </div>
 
             {/* Calculations Breakdown */}
-            <div className="flex-1 space-y-2 text-xs text-gray-400">
+            <div className="flex-1 min-w-0 space-y-2 text-xs text-gray-400">
               <h2 className="text-sm font-bold text-gray-200 mb-3">Grand Total</h2>
 
               <div className="flex justify-between">
@@ -393,7 +412,7 @@ export default function CartPage() {
                     placeholder="Apply Coupon"
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value)}
-                    className="flex-1 bg-[#202126] border border-[#2d2f36] rounded px-2.5 py-1 text-[11px] text-gray-200 outline-none"
+                    className="flex-1 min-w-0 bg-[#202126] border border-[#2d2f36] rounded px-2.5 py-1 text-[11px] text-gray-200 outline-none"
                   />
                   <button
                     type="submit"
@@ -446,74 +465,151 @@ export default function CartPage() {
             </div>
 
             {/* Modal Body: Left Vertical Tabs + Right Form */}
-            <div className="flex min-h-[220px]">
+            <div className="flex flex-col sm:flex-row min-h-[220px]">
               {/* Payment Methods Tabs */}
-              <div className="w-36 border-r border-[#2d2f36] bg-[#16171a] flex flex-col text-xs text-gray-400">
-                {['Credit Card', 'Debit card', 'UPI', 'Wallet'].map((tab) => {
-                  const isSelected = selectedPaymentTab === tab;
+              <div className="sm:w-40 flex-shrink-0 border-b sm:border-b-0 sm:border-r border-[#2d2f36] bg-[#16171a] flex flex-row sm:flex-col overflow-x-auto text-xs text-gray-400">
+                {PAYMENT_TABS.map(({ label }) => {
+                  const isSelected = selectedPaymentTab === label;
                   return (
                     <button
-                      key={tab}
-                      onClick={() => setSelectedPaymentTab(tab)}
-                      className={`text-left px-4 py-3 font-medium transition ${
+                      key={label}
+                      onClick={() => setSelectedPaymentTab(label)}
+                      className={`text-left whitespace-nowrap px-4 py-3 font-medium transition ${
                         isSelected
-                          ? 'text-white bg-[#1c1d22] border-l-2 border-blue-500 font-bold'
+                          ? 'text-white bg-[#1c1d22] border-b-2 sm:border-b-0 sm:border-l-2 border-blue-500 font-bold'
                           : 'hover:text-gray-200 hover:bg-[#1f2025]'
                       }`}
                     >
-                      {tab}
+                      {label}
                     </button>
                   );
                 })}
               </div>
 
-              {/* Form Input fields */}
-              <div className="flex-1 p-5 space-y-3 text-xs">
-                <div>
-                  <label className="text-[10px] text-gray-500 block mb-1">Card Number</label>
-                  <input
-                    type="text"
-                    value={cardForm.cardNumber}
-                    onChange={(e) => setCardForm({ ...cardForm, cardNumber: e.target.value })}
-                    className="w-full bg-[#26272e] border border-[#35363e] rounded px-3 py-1.5 text-xs text-gray-200 outline-none"
-                    placeholder="XXXX-XXXX-XXXX-XXXX"
-                  />
-                </div>
+              {/* Method-specific fields */}
+              <div className="flex-1 min-w-0 p-5 space-y-3 text-xs">
+                {isCardTab && (
+                  <>
+                    <div>
+                      <label className="text-[10px] text-gray-500 block mb-1">Card Number</label>
+                      <input
+                        type="text"
+                        value={cardForm.cardNumber}
+                        onChange={(e) => setCardForm({ ...cardForm, cardNumber: e.target.value })}
+                        className="w-full bg-[#26272e] border border-[#35363e] rounded px-3 py-1.5 text-xs text-gray-200 outline-none"
+                        placeholder="XXXX-XXXX-XXXX-XXXX"
+                      />
+                    </div>
 
-                <div>
-                  <label className="text-[10px] text-gray-500 block mb-1">Name on Card</label>
-                  <input
-                    type="text"
-                    value={cardForm.nameOnCard}
-                    onChange={(e) => setCardForm({ ...cardForm, nameOnCard: e.target.value })}
-                    className="w-full bg-[#26272e] border border-[#35363e] rounded px-3 py-1.5 text-xs text-gray-200 outline-none"
-                    placeholder="Name"
-                  />
-                </div>
+                    <div>
+                      <label className="text-[10px] text-gray-500 block mb-1">Name on Card</label>
+                      <input
+                        type="text"
+                        value={cardForm.nameOnCard}
+                        onChange={(e) => setCardForm({ ...cardForm, nameOnCard: e.target.value })}
+                        className="w-full bg-[#26272e] border border-[#35363e] rounded px-3 py-1.5 text-xs text-gray-200 outline-none"
+                        placeholder="Name"
+                      />
+                    </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] text-gray-500 block mb-1">CVV</label>
+                        <input
+                          type="password"
+                          maxLength="3"
+                          value={cardForm.cvv}
+                          onChange={(e) => setCardForm({ ...cardForm, cvv: e.target.value })}
+                          className="w-full bg-[#26272e] border border-[#35363e] rounded px-3 py-1.5 text-xs text-gray-200 outline-none"
+                          placeholder="XXX"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-gray-500 block mb-1">Date of Expiry</label>
+                        <input
+                          type="text"
+                          value={cardForm.expiry}
+                          onChange={(e) => setCardForm({ ...cardForm, expiry: e.target.value })}
+                          className="w-full bg-[#26272e] border border-[#35363e] rounded px-3 py-1.5 text-xs text-gray-200 outline-none"
+                          placeholder="MM/YYYY"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {selectedPaymentTab === 'UPI' && (
                   <div>
-                    <label className="text-[10px] text-gray-500 block mb-1">CVV</label>
-                    <input
-                      type="password"
-                      maxLength="3"
-                      value={cardForm.cvv}
-                      onChange={(e) => setCardForm({ ...cardForm, cvv: e.target.value })}
-                      className="w-full bg-[#26272e] border border-[#35363e] rounded px-3 py-1.5 text-xs text-gray-200 outline-none"
-                      placeholder="XXX"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-gray-500 block mb-1">Date of Expiry</label>
+                    <label className="text-[10px] text-gray-500 block mb-1">UPI ID</label>
                     <input
                       type="text"
-                      value={cardForm.expiry}
-                      onChange={(e) => setCardForm({ ...cardForm, expiry: e.target.value })}
+                      value={upiId}
+                      onChange={(e) => setUpiId(e.target.value.trim())}
                       className="w-full bg-[#26272e] border border-[#35363e] rounded px-3 py-1.5 text-xs text-gray-200 outline-none"
-                      placeholder="MM/YYYY"
+                      placeholder="yourname@bank"
+                      autoComplete="off"
                     />
+                    {upiId && !isUpiValid ? (
+                      <p className="text-[10px] text-red-400 mt-1">Enter a valid UPI ID, e.g. yourname@okbank</p>
+                    ) : (
+                      <p className="text-[10px] text-gray-500 mt-1">A payment request will be sent to this UPI ID.</p>
+                    )}
                   </div>
-                </div>
+                )}
+
+                {selectedPaymentTab === 'Wallet' && (
+                  <div className="space-y-3">
+                    <div className="bg-[#26272e] border border-[#35363e] rounded-lg p-4">
+                      <p className="text-[10px] text-gray-500">Available wallet balance</p>
+                      <p className="text-xl font-extrabold text-white mt-1">₹{walletBalance}</p>
+                    </div>
+                    <div className="flex justify-between text-gray-400">
+                      <span>Amount to pay</span>
+                      <span className="text-gray-200">₹{Math.round(finalTotal)}</span>
+                    </div>
+                    {walletBalance >= finalTotal ? (
+                      <p className="text-[11px] text-emerald-400">
+                        Balance after payment: ₹{Math.round(walletBalance - finalTotal)}
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-red-400">
+                        Insufficient balance. You need ₹{Math.round(finalTotal - walletBalance)} more, choose another method.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {selectedPaymentTab === 'Cash on Delivery' && (
+                  <div className="space-y-2">
+                    <p className="text-gray-400">Pay in cash when your order is delivered.</p>
+                    <div className="bg-[#26272e] border border-[#35363e] rounded-lg p-4 space-y-1.5 text-gray-400">
+                      <div className="flex justify-between">
+                        <span>Price ({items.length || 2} items)</span>
+                        <span className="text-gray-200">₹{rawSubtotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Tax</span>
+                        <span className="text-gray-200">₹{taxAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Delivery Charges</span>
+                        <span className={deliveryCharges > 0 ? 'text-gray-200' : 'text-emerald-400'}>
+                          {deliveryCharges > 0 ? `₹${deliveryCharges.toFixed(2)}` : 'Free'}
+                        </span>
+                      </div>
+                      {discountAmount > 0 && (
+                        <div className="flex justify-between text-emerald-400">
+                          <span>Discount</span>
+                          <span>-₹{discountAmount}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between border-t border-[#35363e] pt-2 font-bold text-gray-100">
+                        <span>Payable at delivery</span>
+                        <span className="text-white">₹{Math.round(finalTotal)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between pt-3">
                   <button
@@ -525,10 +621,10 @@ export default function CartPage() {
 
                   <button
                     onClick={handleConfirmPayment}
-                    disabled={isProcessing}
-                    className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded font-bold text-xs flex items-center gap-1.5 shadow"
+                    disabled={isProcessing || !canPay}
+                    className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded font-bold text-xs flex items-center gap-1.5 shadow"
                   >
-                    <span>{isProcessing ? 'Processing...' : 'Pay Now'}</span>
+                    <span>{isProcessing ? 'Processing...' : selectedPaymentTab === 'Cash on Delivery' ? 'Place Order' : 'Pay Now'}</span>
                     <div className="w-3 h-3 border border-white/60 rounded-sm grid grid-cols-2 gap-0.5 p-0.5">
                       <div className="bg-white"></div>
                       <div className="bg-white"></div>

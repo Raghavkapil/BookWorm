@@ -32,13 +32,13 @@ function BookCover({ product, size = 'large' }) {
   const isLight = bg === '#f8fafc' || bg === '#facc15' || bg === '#ffffff';
   const sizeClasses =
     size === 'large'
-      ? 'w-[160px] h-[215px]'
-      : 'w-[90px] h-[120px]';
+      ? 'w-[160px] h-[215px] p-3'
+      : 'w-[90px] h-[120px] p-1.5';
 
   return (
     <div
       className={`${sizeClasses} flex-shrink-0 rounded-sm overflow-hidden flex flex-col justify-between text-center select-none shadow-lg border border-[#2b2d34]`}
-      style={{ backgroundColor: bg, color: isLight ? '#0f172a' : '#ffffff', padding: size === 'large' ? '12px' : '6px' }}
+      style={{ backgroundColor: bg, color: isLight ? '#0f172a' : '#ffffff' }}
     >
       <div className={`font-black uppercase tracking-wider leading-tight ${size === 'large' ? 'text-[11px] pt-2' : 'text-[9px]'}`}>
         {product.title}

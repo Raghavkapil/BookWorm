@@ -12,8 +12,8 @@ export default function Navbar() {
   const location = useLocation();
 
   return (
-    <header className="sticky top-0 z-50 bg-[#16171a] border-b border-[#23252a] px-4 py-2.5">
-      <div className="max-w-[1600px] mx-auto flex items-center justify-between">
+    <header className="sticky top-0 z-50 bg-[#16171a] border-b border-[#23252a] px-4 sm:px-6 py-2.5">
+      <div className="max-w-[1920px] mx-auto flex items-center justify-between">
         {/* Left: Brand with square grid icon */}
         <div className="flex items-center gap-6">
           <Link to="/" className="flex items-center gap-2.5 text-gray-200 hover:text-white transition group">
@@ -95,6 +95,22 @@ export default function Navbar() {
           )}
         </div>
       </div>
+
+      {/* Mobile nav links (hidden on md+ where the inline nav is shown) */}
+      <nav className="md:hidden max-w-[1920px] mx-auto flex items-center gap-5 overflow-x-auto pt-2 text-xs text-gray-400 font-medium whitespace-nowrap">
+        <Link to="/catalogue" className={`hover:text-gray-200 ${location.pathname === '/catalogue' ? 'text-white font-semibold' : ''}`}>
+          Catalogue
+        </Link>
+        <Link to="/orders" className={`hover:text-gray-200 ${location.pathname === '/orders' ? 'text-white font-semibold' : ''}`}>
+          My Orders
+        </Link>
+        <Link to="/wishlist" className={`hover:text-gray-200 ${location.pathname === '/wishlist' ? 'text-white font-semibold' : ''}`}>
+          My Wishlist{wishlist?.length > 0 ? ` (${wishlist.length})` : ''}
+        </Link>
+        <Link to="/writers" className={`hover:text-gray-200 ${location.pathname === '/writers' ? 'text-white font-semibold' : ''}`}>
+          My Writers
+        </Link>
+      </nav>
     </header>
   );
 }

@@ -49,7 +49,7 @@ export default function ProfilePage() {
   });
 
   return (
-    <div className="p-6 max-w-[1000px] mx-auto space-y-6 text-xs text-gray-300">
+    <div className="p-4 sm:p-6 max-w-[1000px] mx-auto space-y-6 text-xs text-gray-300">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-base font-bold text-gray-100">My Account</h1>

@@ -96,11 +96,11 @@ export default function WritersPage() {
   const followedList = DEFAULT_AUTHORS.filter((a) => followedWriters.includes(a.name));
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-4 sm:p-6 lg:p-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#20222a]">
         <div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
               <Feather className="w-7 h-7 text-blue-500" />
               <span>My Writers</span>
@@ -137,7 +137,7 @@ export default function WritersPage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
             {followedList.map((author) => {
               const authorBooks = productsData?.products?.filter((p) =>
                 p.author.toLowerCase().includes(author.name.toLowerCase())
@@ -168,7 +168,7 @@ export default function WritersPage() {
                   </div>
 
                   {/* Actions & Books link */}
-                  <div className="mt-4 pt-3 border-t border-[#20222a] flex items-center justify-between">
+                  <div className="mt-4 pt-3 border-t border-[#20222a] flex flex-wrap items-center justify-between gap-2">
                     <span className="text-[11px] text-gray-400 font-medium">
                       {author.followers} readers
                     </span>
@@ -203,7 +203,7 @@ export default function WritersPage() {
           <span>Discover Acclaimed Writers</span>
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
           {filteredAuthors.map((author) => {
             const isFollowed = followedWriters.includes(author.name);
 
@@ -232,7 +232,7 @@ export default function WritersPage() {
                 </div>
 
                 {/* Footer Actions */}
-                <div className="mt-4 pt-3 border-t border-[#20222a] flex items-center justify-between">
+                <div className="mt-4 pt-3 border-t border-[#20222a] flex flex-wrap items-center justify-between gap-2">
                   <span className="text-[11px] text-gray-400 font-medium">
                     {author.followers} readers
                   </span>

@@ -34,7 +34,7 @@ export default function CategoryPage() {
   const { category, products } = data;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-4 sm:p-6 lg:p-8">
       <Link to="/catalogue" className="text-xs text-gray-500 hover:text-indigo-600 flex items-center gap-1 w-fit">
         <ArrowLeft className="w-3.5 h-3.5" /> All Categories
       </Link>

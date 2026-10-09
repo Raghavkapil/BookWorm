@@ -79,7 +79,7 @@ export default function BookHorizontalCard({ product }) {
       </div>
 
       {/* Book Metadata */}
-      <div className="flex flex-col justify-between h-[135px] min-w-0 flex-1 py-0.5">
+      <div className="flex flex-col justify-between gap-2 min-h-[135px] min-w-0 flex-1 py-0.5">
         <div>
           <h3
             className="text-[13px] font-bold text-gray-100 group-hover:text-blue-400 transition leading-snug truncate"
